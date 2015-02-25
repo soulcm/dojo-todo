@@ -3,21 +3,23 @@ define([
 	'dojo/text!./templates/TodoApp.html',
 	'todo/TodoCom',
 	'dojo/on',
+	'dojo/_base/array',
 	'dojo/dom-style',
 	'dojo/_base/lang'
-], function(declare, template, TodoCom, on, domStyle, lang) {
+], function(declare, template, TodoCom, on, array, domStyle, lang) {
 	return declare('todo/TodoApp', [TodoCom], {
 		templateString: template,
+
+		flagInit: true,
 
 		startup: function() {
 			this.inherited(arguments);
 			this.addEvents();
-			// this.todoList.startup();
+			this.showList();
 		},
 
 		addEvents: function() {
 			on(this.todo, 'keyup', lang.hitch(this, this.handleTodo));
-			on(this.todoList.domNode, 'showList', lang.hitch(this, this.showList));
 		},
 
 		handleTodo: function(e) {
@@ -28,18 +30,34 @@ define([
 			}
 		},
 
-		showList: function() {
-			domStyle.set(this.todoList.domNode, 'display', '');
-			var listObj = this.todoList;
-			listObj.rendList(this.todo.value.trim());
+		/*
+		 * show todo list
+		 */
+		showList: function(todoStroeList) {
+			var todoObj, listObj = this.todoList;
+			domStyle.set(listObj.domNode, 'display', '');
+			if (this.todo.value.trim() !== '') {
+				listObj.rendList(todoStroeList);
+			}
+			if (this.flagInit) {
+				if (todoObj = window.localStorage.getItem('dojo-todo')) {
+					array.forEach(todoObj.split(','), function(item) {
+						var todoStroeList = JSON.parse(window.localStorage.getItem(item));
+						listObj.rendList(todoStroeList);
+					});
+				}
+				this.flagInit = false;
+			}
+
 			listObj.countItems();
 			this.todo.value = '';
 		},
 
 		addTodoList: function() {
-			var todoValue = this.todo.value.trim();
+			var todoValue = this.todo.value.trim(),
+				todoStroeList = {};
 			if (todoValue.length) {
-				on.emit(this.todoList.domNode,'showList',{});
+				this.showList(this.saveStorage(todoValue));
 			}
 		}
 	});

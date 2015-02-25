@@ -7,11 +7,12 @@ define([
 	'dojo/dom',
 	'dojo/dom-construct',
 	'dojo/dom-class',
+	'dojo/dom-attr',
 	'dojo/_base/lang',
 	'dojo/_base/array',
 	'dojo/dom-style',
 	'dojo/NodeList-traverse'
-], function(declare, template, TodoCom, on, query, dom, domConstruct, domClass, lang, array, domStyle) {
+], function(declare, template, TodoCom, on, query, dom, domConstruct, domClass, domAttr, lang, array, domStyle) {
 	return declare('todo/TodoList', [TodoCom], {
 		templateString: template,
 
@@ -28,20 +29,26 @@ define([
 		},
 
 		toogleCheck: function(event) {
-			var e = event || window.event;
+			var e = event || window.event,todoId,checked;
 			if (e.target.nodeName.toUpperCase() == 'INPUT') {
 				if (e.target.id === 'toggle-all') {
-					var checked = e.target.checked;
-					query('.toggle').forEach(function(item) {
+					checked = e.target.checked;
+					query('.toggle').forEach(lang.hitch(this,function(item) {
 						(item.checked = checked) ? domClass.add(query(item).closest('li')[0], 'done'): domClass.remove(query(item).closest('li')[0], 'done');
-					});
+						todoId = domAttr.get(query(item).closest('li')[0],'data-todoid');
+						this.editStorage(todoId);
+					}));
 					this.countItems();
 				} else {
-					var checked = e.target.checked;
+					checked = e.target.checked;
 					domClass.toggle(query(e.target).closest('li')[0], 'done');
+					todoId = domAttr.get(query(e.target).closest('li')[0],'data-todoid');
+					this.editStorage(todoId);
 					this.countItems(checked);
 				}
 			}else if(e.target.nodeName == 'A'){
+				todoId = domAttr.get(query(e.target).closest('li')[0],'data-todoid');
+				this.removeStorage(todoId);
 				domConstruct.destroy(query(e.target).closest('li')[0]);
 				this.countItems();
 			}
@@ -66,14 +73,19 @@ define([
 			});
 		},
 
-		rendList: function(item) {
-			var liHtml = '<li>' +
+		rendList: function(storeList) {
+			if (typeof storeList !== 'object') {
+				throw new Error('storeList should be an object');
+			}
+			var doneClass = storeList.done ? 'done' : '';
+			var checkedHtml = storeList.done ? '<input class="toggle" type="checkbox" checked>' : '<input class="toggle" type="checkbox">';
+			var liHtml = '<li data-todoid="'+storeList.id+'" class="'+doneClass+'">' +
 					'<div class="view">' +
-						'<input class="toggle" type="checkbox">' +
-						'<label>' + item + '</label>' +
+						checkedHtml +
+						'<label>' + storeList.title + '</label>' +
 						'<a class="destroy"></a>' +
 					'</div>' +
-					'<input class="edit" type="text" value="' + item + '">' +
+					'<input class="edit" type="text" value="' + storeList.title + '">' +
 				'</li>';
 
 			domConstruct.place(liHtml, 'todo-list', 'last');
@@ -88,7 +100,7 @@ define([
 			}
 			arguments.length ? this.checkAll(arguments[0]) : this.checkAll();
 			var totalDone = query('#todo-list li.done').length;
-			query('.todo-count').children('b')[0].innerHTML = total - totalDone;
+			query('.todo-count b')[0].innerHTML = total - totalDone;
 			if (totalDone) {
 				var completeHtml = '<a id="clear-completed">Clear ' + totalDone + ' completed item</a>';
 				domConstruct.place(completeHtml, this.footer, 'first');
