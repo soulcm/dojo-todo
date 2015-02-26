@@ -24,17 +24,18 @@ define([
 			return todoStroeList;
 		},
 
-		editStorage: function(todoId) {
+		editStorage: function(todoId, obj) {
 			var todoStoreList = JSON.parse(window.localStorage.getItem(todoId));
-			todoStoreList.done = todoStoreList.done ? false : true;
-			window.localStorage.setItem(todoId,JSON.stringify(todoStoreList));
+			todoStoreList.done = obj.done === undefined ? todoStoreList.done : obj.done;
+			todoStoreList.title = obj.title === undefined ? todoStoreList.title : obj.title;
+			window.localStorage.setItem(todoId, JSON.stringify(todoStoreList));
 		},
 
 		removeStorage: function(todoId) {
 			window.localStorage.removeItem(todoId);
 			var todoStoreArr = window.localStorage.getItem('dojo-todo').split(',');
-			todoStoreArr.splice(array.indexOf(todoStoreArr,todoId),1);
-			window.localStorage.setItem('dojo-todo',todoStoreArr);
+			todoStoreArr.splice(array.indexOf(todoStoreArr, todoId), 1);
+			window.localStorage.setItem('dojo-todo', todoStoreArr);
 		}
 
 	});
