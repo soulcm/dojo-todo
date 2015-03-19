@@ -138,7 +138,7 @@ define([
 			if (totalDone) {
 				var completeHtml = '<a id="clear-completed">Clear ' + totalDone + ' completed item</a>';
 				domConstruct.place(completeHtml, this.footer, 'first');
-				on(dom.byId('clear-completed'), 'click', lang.hitch(this, this.clearCompleted));
+				this.own(on(dom.byId('clear-completed'), 'click', lang.hitch(this, this.clearCompleted)));
 			}
 		}
 	});
